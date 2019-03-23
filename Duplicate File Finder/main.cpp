@@ -11,7 +11,7 @@ struct KeepWindowOpen
 {
     ~KeepWindowOpen()
     {
-        std::cout << "Press any key to exit.";
+        std::cout << "Press enter to exit.";
         std::string temp;
         std::getline(std::cin, temp);
     }
