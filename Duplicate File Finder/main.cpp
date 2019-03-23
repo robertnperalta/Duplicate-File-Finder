@@ -76,6 +76,11 @@ int main()
     KeepWindowOpen k;
 
     std::string desktop = findDesktop();
+    if (!fs::exists(desktop))
+    {
+        std::cout << "Error retrieving Desktop file path.";
+        return 0;
+    }
     fixSlashes(desktop);
     fs::path root = getPath(desktop);
 
