@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 #include <filesystem>
 #include <string>
 #include <unordered_map>
@@ -20,8 +21,9 @@ struct KeepWindowOpen
 
 struct Info
 {
-    Info(std::string p) :path(p), hasDuplicates(false) {}
+    Info(std::string p, uintmax_t s) :path(p), size(s), hasDuplicates(false) {}
     std::string path;
+    uintmax_t size;
     bool hasDuplicates;
 };
 
@@ -49,6 +51,18 @@ fs::path getPath(std::string desktop)
     return root;
 }
 
+std::string convertSize(uintmax_t size)
+{
+    std::string units[4] = { "B", "KB", "MB", "GB" };
+    int unitIndex = 0;
+    while (size > 1024 && unitIndex < 4)
+    {
+        size /= 1024;
+        unitIndex++;
+    }
+    return std::to_string(size) + " " + units[unitIndex];
+}
+
 int main()
 {
     KeepWindowOpen k;
@@ -57,7 +71,7 @@ int main()
     fs::path root = getPath(desktop);
 
     std::unordered_map<std::string, Info> filesSeen;
-    std::unordered_map<std::string, std::vector<std::string>> duplicates;
+    std::unordered_map<std::string, std::vector<Info>> duplicates;
     for (auto& entry : fs::recursive_directory_iterator(root))  // For every file under the current directory/subdirectories
     {
         if (entry.is_regular_file())    // If the current entry is a regular file
@@ -67,15 +81,15 @@ int main()
             if (cur != filesSeen.end()) // If the current file has been seen before
             {
                 if (cur->second.hasDuplicates)  // If it already has duplicates
-                    duplicates.find(name)->second.push_back(entry.path().string()); // Add its file path to the list of paths
+                    duplicates.find(name)->second.push_back(Info(entry.path().string(), entry.file_size())); // Add its file path to the list of paths
                 else
                 {
                     cur->second.hasDuplicates = true;
-                    duplicates[name] = { cur->second.path , entry.path().string() };
+                    duplicates[name] = { cur->second , Info(entry.path().string(), entry.file_size()) };
                 }
             }
             else
-                filesSeen.emplace(name, Info(entry.path().string()));  // Otherwise add it to the table of files seen
+                filesSeen.emplace(name, Info(entry.path().string(), entry.file_size()));  // Otherwise add it to the table of files seen
         }
     }
 
@@ -85,12 +99,12 @@ int main()
         for (auto& file : duplicates)
         {
             fout << file.second.size() << " potential copies found for " << file.first << " at the following file paths:\n";
-            for (auto& fPath : file.second)
+            for (auto& i : file.second)
             {
-                for (size_t k = 0; k < fPath.size(); k++)
-                    if (fPath[k] == '\\')
-                        fPath[k] = '/';
-                fout << '\t' + fPath + '\n';
+                for (size_t k = 0; k < i.path.size(); k++)
+                    if (i.path[k] == '\\')
+                        i.path[k] = '/';
+                fout << '\t' << std::setw(6) << convertSize(i.size) << "  " + i.path + '\n';
             }
             fout << '\n';
         }
