@@ -65,8 +65,8 @@ std::string convertSize(uintmax_t size)
 void fixSlashes(std::string& s)
 {
     for (size_t k = 0; k < s.size(); k++)
-        if (s[k] == '\\')
-            s[k] = '/';
+        if (s[k] == '/')
+            s[k] = '\\';
 }
 
 int main()
