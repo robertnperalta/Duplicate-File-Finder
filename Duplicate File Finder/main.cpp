@@ -27,17 +27,18 @@ struct Info
     bool hasDuplicates;
 };
 
+std::string findDesktop()
+{
+    for (auto& p : fs::directory_iterator("C:/Users"))
+        if (p.is_directory() && p.path() != "C:/Users/Public"
+            && p.path() != "C:/Users/Default" && p.path() != "C:/Users/All Users"
+            && p.path() != "C:/Users/Default User")
+            return p.path().string() + "/Desktop/";
+    return "NOT_FOUND";
+}
+
 fs::path getPath(std::string desktop)
 {
-    //for (auto& p : fs::directory_iterator("C:/Users"))
-    //    if (p.path() != "C:/Users/Public" && p.path() != "C:/Users/Default")
-    //    {
-    //        desktop = p.path().string() + "/Desktop/";
-    //        break;
-    //    }
-    //if (!fs::exists(fs::path(desktop)))
-    //    std::cout << desktop << "\nFinding desktop failed\n";
-
     std::cout << "Enter the file path from the desktop: " << desktop;
     std::string p;
     std::getline(std::cin, p);
@@ -63,11 +64,19 @@ std::string convertSize(uintmax_t size)
     return std::to_string(size) + " " + units[unitIndex];
 }
 
+void fixSlashes(std::string& s)
+{
+    for (size_t k = 0; k < s.size(); k++)
+        if (s[k] == '\\')
+            s[k] = '/';
+}
+
 int main()
 {
     KeepWindowOpen k;
 
-    std::string desktop = "C:/Users/" + USER_FOLDER_NAME + "/Desktop/";
+    std::string desktop = findDesktop();
+    fixSlashes(desktop);
     fs::path root = getPath(desktop);
 
     std::unordered_map<std::string, Info> filesSeen;
@@ -101,9 +110,7 @@ int main()
             fout << file.second.size() << " potential copies found for " << file.first << " at the following file paths:\n";
             for (auto& i : file.second)
             {
-                for (size_t k = 0; k < i.path.size(); k++)
-                    if (i.path[k] == '\\')
-                        i.path[k] = '/';
+                fixSlashes(i.path);
                 fout << '\t' << std::setw(6) << convertSize(i.size) << "  " + i.path + '\n';
             }
             fout << '\n';
