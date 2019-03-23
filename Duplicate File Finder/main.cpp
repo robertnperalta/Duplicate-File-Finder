@@ -7,8 +7,6 @@
 #include <vector>
 namespace fs = std::filesystem;
 
-std::string USER_FOLDER_NAME = "rober";
-
 struct KeepWindowOpen
 {
     ~KeepWindowOpen()
